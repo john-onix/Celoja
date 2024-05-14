@@ -7,10 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-import regex as re
 import pandas as pd
 import math
-import time
 from bs4 import BeautifulSoup as bs
 
 service = Service(ChromeDriverManager().install())
@@ -24,7 +22,7 @@ options.add_experimental_option('excludeSwitches', ['enable-logging'])
 navegador = webdriver.Chrome(options=options)
 wait = WebDriverWait(navegador, 3)
 
-url = "https://www.farmaponte.com.br/saude/medicamentos/?p=182"
+url = "https://www.farmaponte.com.br/saude/medicamentos/"
 navegador.get(url)
 
 num_prodsstr = navegador.find_element ('xpath', '//*[@id="main-wrapper"]/div[1]/div[3]/div[1]/div[2]/div/div[2]').text
@@ -95,6 +93,14 @@ while (pag <= ultima_pag):
     if pag < ultima_pag:
         next = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="main-wrapper"]/div[1]/div[3]/div[1]/div[2]/div/ul/li[12]/a'))).click()
     pag = pag + 1
-    print( pag + 181)
 
-print(lista_nome, lista_ean, lista_desconto, lista_preco_bruto, lista_preco_desc, lista_marca)
+Farmaponte = {'Nome': lista_nome,
+              'Código EAN': lista_ean,
+              'Marca': lista_marca,
+              'Preço sem desconto': lista_preco_bruto,
+              'Desconto': lista_desconto,
+              'Preço com desconto': lista_preco_desc,}
+
+Df_Farmaponte = pd.DataFrame (Farmaponte)
+print(Df_Farmaponte)
+Df_Farmaponte.to_csv('out.csv')
