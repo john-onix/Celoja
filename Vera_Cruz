@@ -1,0 +1,105 @@
+import pandas as pd
+from bs4 import BeautifulSoup as bs
+import requests
+import math
+import os
+from concurrent.futures import ThreadPoolExecutor
+
+
+def main ():
+    reqUrl = "https://www.drogariaveracruz.com.br/medicamentos/"
+    headersList = {
+     "Accept": "*/*",
+     "User-Agent": "Thunder Client (https://www.thunderclient.com)" 
+    }
+    payload = ""
+    response = requests.request("GET", reqUrl, data=payload,  headers=headersList)
+    soup = bs(response.text, 'html.parser')
+    numero_de_produtos_1 = soup.find('body', id = 'search')
+    numero_de_produtos_2 = numero_de_produtos_1.find('div', class_ = 'content')
+    numero_de_produtos_3 = numero_de_produtos_2.find('div', class_ = 'col-12 col-lg-9 pl-lg-0')
+    numero_de_produtos_4 = numero_de_produtos_3.find('div', class_ = 'page-template')
+    num_prods = numero_de_produtos_4.find('div', class_ = 'text-center pt-3').text
+    num_prods.split()
+    num_prods = num_prods[29:]
+    index = num_prods.find(' ')
+    num_prods = num_prods[:index]
+    ultima_pag = math.ceil(int(num_prods)/20)
+    pag = 1 
+    lista_ean = []; lista_desconto = []; lista_marca = []; lista_preco_bruto = []; lista_preco_desc = []; lista_nome = []
+    while (pag <= ultima_pag): 
+        reqUrl = f'https://www.drogariaveracruz.com.br/medicamentos/?p={pag}'
+        headersList = {
+         "Accept": "*/*",
+         "User-Agent": "Thunder Client (https://www.thunderclient.com)" 
+        }
+        payload = ""
+        response = requests.request("GET", reqUrl, data=payload,  headers=headersList)
+        soup = bs(response.text, 'html.parser')
+        produto_pag = 0
+        produto_1 = soup.find ('div', id = 'main-wrapper')
+        produto_2 = produto_1.find ('div', class_ = 'col-12 col-lg-9 pl-lg-0')
+        prod_url = produto_2.find_all ('h2', class_ = 'title')
+        while (produto_pag<24):
+            indisp = False
+            try:
+                prod_url_util = str(prod_url[produto_pag]); index = prod_url_util.find ('/'); index2 = prod_url_util.find('p"'); prod_url_util.split(); prod_url_util = str(prod_url_util[index:index2]) + 'p'
+            except: break
+            reqUrl = f'https://www.drogariaveracruz.com.br/{prod_url_util}'
+            headersList = {
+             "Accept": "*/*",
+             "User-Agent": "Thunder Client (https://www.thunderclient.com)" 
+            }
+            payload = ""
+            response = requests.request("GET", reqUrl, data=payload,  headers=headersList)
+
+            soup = bs(response.text, 'html.parser')
+            ean = str(soup.find('meta', itemprop='gtin13'))
+            ean.split(); ean = str(ean[15:28])
+
+            nome_1 = soup.find('div', class_ = 'content')
+            nome = nome_1.find('h1', itemprop = 'name')
+            if nome == None:
+                nome = nome_1.find('h1', class_ = 'name').text
+            else:
+                nome = nome_1.find('h1', itemprop = 'name').text
+
+            try:
+                desconto = soup.find ('span', class_ = 'descont').text
+                desconto.split(); index = desconto.find(' ') ; desconto = str(desconto[1:index]) + "%"
+            except:
+                desconto = "0%"
+
+            try:
+                marca = soup.find('a', class_ = 'text-primary font-weight-bold mr-3').text
+            except:
+                marca = 'Indisponível'
+
+            try:
+                preco_sem = soup.find('p', class_ = 'sale-price').text
+            except:
+                preco_sem = "Produto indisponível"
+                indisp = True
+
+            if (indisp != True):
+                preco_com = soup.find('p', class_ = 'unit-price').text;preco_com = preco_com.replace(',', '.') ; preco_com.split(); preco_com = str(preco_com[53:61])
+            else:
+                preco_com = "Produto indisponível"
+
+            produto_pag = produto_pag + 1
+            lista_marca.append(marca); lista_nome.append(nome); lista_preco_bruto.append(preco_sem); lista_preco_desc.append(preco_com); lista_desconto.append(desconto); lista_ean.append(ean)
+        pag = pag + 1
+    Farmaponte = {'Nome': lista_nome,
+                  'Código EAN': lista_ean,
+                  'Marca': lista_marca,
+                  'Preço sem desconto': lista_preco_bruto,
+                  'Desconto': lista_desconto,
+                  'Preço com desconto': lista_preco_desc,}
+
+    Df_Farmaponte = pd.DataFrame (Farmaponte)
+    print(Df_Farmaponte)
+    Df_Farmaponte.to_csv('out.csv')
+
+all_workers = os.cpu_count()
+with ThreadPoolExecutor(max_workers=all_workers) as executor:
+    executor.submit(main())
