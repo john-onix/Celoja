@@ -68,6 +68,7 @@ def main ():
             else:
                 nome = nome_1.find('h1', itemprop = 'name').text
             
+            
             desconto = soup.find ('span', class_ = 'discount').text
             desconto.split(); index = desconto.find(' ') ; desconto = str(desconto[:index])
 
@@ -77,33 +78,35 @@ def main ():
                 marca = 'Indisponível'
 
             try:
-                preco_sem = soup.find('p', class_ = 'card-installments').text
+                preco_sem = soup.find('p', class_ = 'card-installments').text; preco_sem = preco_sem.replace(',', '.')
             except:
                 preco_sem = "Produto indisponível"
                 indisp = True
 
             if (indisp != True):
-                preco_sem = soup.find('p', class_ = 'unit-price').text
+                preco_sem = soup.find('p', class_ = 'unit-price').text; preco_sem = preco_sem.replace(',', '.')
                 preco_l1 = soup.find('div', class_ = 'row mt-sm-3')
                 preco_l2 = preco_l1.find('p', class_ = 'card-installments')
                 preco_com = preco_l2.find('strong', class_ = 'get_card_price').text; preco_com = preco_com.replace(',', '.') ; preco_com.split(); preco_com = float(preco_com[index:])
                 multip = preco_l2.find('span', class_ = 'get_min_installments').text; multip.split(); index = multip.find('x'); multip = float(multip[:index])
-                preco_com = 'R$ ' + str(preco_com*multip); preco_com = preco_com.replace('.', ',')
+                preco_com = str(preco_com*multip)
+                real = preco_sem.split()
+                preco_sem = str(real[1])
             else:
                 preco_com = "Produto indisponível"
+
             produto_pag = produto_pag + 1
             lista_marca.append(marca); lista_nome.append(nome); lista_preco_bruto.append(preco_sem); lista_preco_desc.append(preco_com); lista_desconto.append(desconto); lista_ean.append(ean)
         pag = pag + 1
-    Farmaponte = {'Nome': lista_nome,
-                  'Código EAN': lista_ean,
+    Farmaponte = {'Nome do produto': lista_nome,
+                  'Ean': lista_ean,
                   'Marca': lista_marca,
                   'Preço sem desconto': lista_preco_bruto,
                   'Desconto': lista_desconto,
                   'Preço com desconto': lista_preco_desc,}
 
     Df_Farmaponte = pd.DataFrame (Farmaponte)
-    print(Df_Farmaponte)
-    Df_Farmaponte.to_csv('out_FarmaPonte.csv')
+    Df_Farmaponte.to_csv('FarmaPonte.csv')
 
 all_workers = os.cpu_count()
 with ThreadPoolExecutor(max_workers=all_workers) as executor:
