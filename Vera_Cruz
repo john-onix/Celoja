@@ -89,16 +89,16 @@ def main ():
             produto_pag = produto_pag + 1
             lista_marca.append(marca); lista_nome.append(nome); lista_preco_bruto.append(preco_sem); lista_preco_desc.append(preco_com); lista_desconto.append(desconto); lista_ean.append(ean)
         pag = pag + 1
-    Farmaponte = {'Nome': lista_nome,
+    VeraCruz = {'Nome': lista_nome,
                   'Código EAN': lista_ean,
                   'Marca': lista_marca,
                   'Preço sem desconto': lista_preco_bruto,
                   'Desconto': lista_desconto,
                   'Preço com desconto': lista_preco_desc,}
 
-    Df_Farmaponte = pd.DataFrame (Farmaponte)
-    print(Df_Farmaponte)
-    Df_Farmaponte.to_csv('out.csv')
+    Df_VeraCruz = pd.DataFrame (VeraCruz)
+    print(Df_VeraCruz)
+    Df_VeraCruz.to_csv('out_VeraCruz.csv')
 
 all_workers = os.cpu_count()
 with ThreadPoolExecutor(max_workers=all_workers) as executor:
