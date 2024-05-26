@@ -25,7 +25,7 @@ def main ():
     index = num_prods.find(' ')
     num_prods = num_prods[:index]
     ultima_pag = math.ceil(int(num_prods)/20)
-    pag = 1 
+    pag = 1
     lista_ean = []; lista_desconto = []; lista_marca = []; lista_preco_bruto = []; lista_preco_desc = []; lista_nome = []
     while (pag <= ultima_pag): 
         reqUrl = f'https://www.drogariaveracruz.com.br/medicamentos/?p={pag}'
@@ -40,7 +40,7 @@ def main ():
         produto_1 = soup.find ('div', id = 'main-wrapper')
         produto_2 = produto_1.find ('div', class_ = 'col-12 col-lg-9 pl-lg-0')
         prod_url = produto_2.find_all ('h2', class_ = 'title')
-        while (produto_pag<24):
+        while (produto_pag<20):
             indisp = False
             try:
                 prod_url_util = str(prod_url[produto_pag]); index = prod_url_util.find ('/'); index2 = prod_url_util.find('p"'); prod_url_util.split(); prod_url_util = str(prod_url_util[index:index2]) + 'p'
@@ -81,24 +81,41 @@ def main ():
                 preco_sem = "Produto indisponível"
                 indisp = True
 
-            if (indisp != True):
-                preco_com = soup.find('p', class_ = 'unit-price').text;preco_com = preco_com.replace(',', '.') ; preco_com.split(); preco_com = str(preco_com[53:61])
-            else:
+            if (indisp == True):
                 preco_com = "Produto indisponível"
+            else:
+                preco_com = soup.find('p', class_ = 'unit-price').text;preco_com = preco_com.replace(',', '.') ; preco_com.split(); preco_com = str(preco_com[53:61])
+                preco_sem = preco_sem.replace(',', '.')
+                real = preco_sem.split()
+                preco_sem = str(real[1])
+                real = preco_com.split()
+                try:
+                    preco_com = str(real[1])
+                except:
+                    pass
+
+            try:
+                esgotado = soup.find('h2', class_='d-block font-size-20 font-weight-bold pb-4').text
+            except:
+                pass
+            else:
+                if esgotado == 'PRODUTO ESGOTADO':
+                    preco_com = preco_sem = "Produto indisponível"
+                    desconto = "0%"
 
             produto_pag = produto_pag + 1
-            lista_marca.append(marca); lista_nome.append(nome); lista_preco_bruto.append(preco_sem); lista_preco_desc.append(preco_com); lista_desconto.append(desconto); lista_ean.append(ean)
+            lista_marca.append(marca); lista_nome.append(nome); lista_preco_bruto.append(preco_com); lista_preco_desc.append(preco_sem); lista_desconto.append(desconto); lista_ean.append(ean)
         pag = pag + 1
-    VeraCruz = {'Nome': lista_nome,
-                  'Código EAN': lista_ean,
+        
+    VeraCruz = {'Nome do produto': lista_nome,
+                  'Ean': lista_ean,
                   'Marca': lista_marca,
                   'Preço sem desconto': lista_preco_bruto,
                   'Desconto': lista_desconto,
                   'Preço com desconto': lista_preco_desc,}
 
     Df_VeraCruz = pd.DataFrame (VeraCruz)
-    print(Df_VeraCruz)
-    Df_VeraCruz.to_csv('out_VeraCruz.csv')
+    Df_VeraCruz.to_csv('VeraCruz.csv')
 
 all_workers = os.cpu_count()
 with ThreadPoolExecutor(max_workers=all_workers) as executor:
