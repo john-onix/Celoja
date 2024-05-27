@@ -1,0 +1,38 @@
+import streamlit as st
+import pandas as pd
+
+
+st.set_page_config(                                 
+    page_title="Consulta Celoja",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+
+filepath1 = f'C:/Users/ferna/Desktop/Poli/PJ/FarmaPonte.csv' #farmaponte
+filepath2 = f'C:/Users/ferna/Desktop/Poli/PJ/VeraCruz.csv' #veracruz
+filepath3 = f'C:/Users/ferna/Desktop/Poli/PJ/lista_de_produtos_MM' #minasmais
+filepath4 = f'C:/Users/ferna/Desktop/Poli/PJ/lista_de_produtos_SJ' #saojoao
+
+st.header('Consulta Celoja')
+
+df_FP = pd.read_csv(filepath1)
+df_VC = pd.read_csv(filepath2)
+df_MM = pd.read_csv(filepath3)
+df_SJ = pd.read_csv(filepath4)
+
+data = pd.concat([df_FP, df_VC, df_MM, df_SJ])
+df = data.drop(data.columns[0], axis=1)
+
+
+search_value = st.text_input("Pesquisar por Nome ou EAN:")
+
+df['Ean'] = df['Ean'].astype(str)
+
+try:
+    filtered_rows = df[df['Nome do produto'].str.contains(search_value, na=False) | df['Ean'].str.contains(search_value, na=False)]
+except:
+    st.text("Error while reading CSV file. Try correcting the filepath on your program.")
+
+
+st.dataframe(filtered_rows)
